@@ -6,9 +6,6 @@
 // Copyright (C) 2012 Mike McCauley
 // $Id: Random.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
-TaskHandle_t handle_core_0;
-TaskHandle_t handle_core_1;
-
 bool debug = false;
 long int count = 0; //temp work around to display slowing the stepper down
 long int previousUpdate = 0;
@@ -85,64 +82,52 @@ void setup()
   display1.setCursor(0,0);
   display1.print(F("Current Load Cell Reading: "));
   display1.display();
-
-  //
-  //
-  //Multi Threading
-  //
-  //
-    //Core 0
-      xTaskCreatePinnedToCore(
-                    core_0,   /* Task function. */
-                    "stepperDrive",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &handle_core_0,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
-  delay(500);
-    //Core 1
-        xTaskCreatePinnedToCore(
-                      core_1,   /* Task function. */
-                      "displayReadings",     /* name of task. */
-                      10000,       /* Stack size of task */
-                      NULL,        /* parameter of the task */
-                      1,           /* priority of the task */
-                      &handle_core_1,      /* Task handle to keep track of created task */
-                      1);          /* pin task to core 0 */                  
-    delay(500);
-
-
 }
-
-void core_0(void * nullParam) {
-//  for(;;) {
-//    stepperControl(2600, 3000);
-//
-//
-//  }
-
-
-
-}
-
-void core_1(void * nullParam) {
-
-
-
-
-}
-
 
 void loop()
 {
+  //
+  //
+  //Stepper Control
+  //
+  //
+    stepperControl(2600, 3000);
+
+  //
+  //
+  //Display 0 control
+  //
+  //
+//    display0.setTextSize(1);
+//    display0.setTextColor(SSD1306_WHITE);
+//    display0.setCursor(0,0);
+//    display0.print(F("Green Button: Stepper Runs While Pressed\n Yellow Button: Stepper Moves A Programmed Number Of Steps With Acceleration"));
+//    display0.display();
+
   
+  //
+  //
+  //Display 1 control
+  //
+  //
+//    display1.setTextSize(1);
+//    display1.setTextColor(SSD1306_WHITE);
+//    display1.setCursor(0,0);
+//    display1.print(F("Current Load Cell Reading: "));
+//    display1.display();
+//        if(millis() - previousUpdate >= 500) {
+//          int temp = scale.get_units();
+//          display1.print(F("test"));
+//          display1.display();
+//          previousUpdate = millis();
+//        } else {
+//          count++;
+//        }
+
+
+
+
 }
-
-
-
-
-
 
 
 void stepperSetup(int maxSpeed_, int maxAcceleration_) {
@@ -208,4 +193,3 @@ void stepperControl(int maxSpeed, int maxAcceleration) {
 
   stepper.run();    //run any steps qued for the stepper
 }
-
