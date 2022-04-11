@@ -121,56 +121,6 @@ void loop()
   //Stepper Control
   //
   //
-<<<<<<< Updated upstream
-    stepperControl(2600, 3000);
-
-  //
-  //
-  //Display 0 control
-  //
-  //
-//    display0.setTextSize(1);
-//    display0.setTextColor(SSD1306_WHITE);
-//    display0.setCursor(0,0);
-//    display0.print(F("Green Button: Stepper Runs While Pressed\n Yellow Button: Stepper Moves A Programmed Number Of Steps With Acceleration"));
-//    display0.display();
-
-  
-  //
-  //
-  //Display 1 control
-  //
-  //
-//    display1.setTextSize(1);
-//    display1.setTextColor(SSD1306_WHITE);
-//    display1.setCursor(0,0);
-//    display1.print(F("Current Load Cell Reading: "));
-//    display1.display();
-//        if(millis() - previousUpdate >= 500) {
-//          int temp = scale.get_units();
-//          display1.print(F("test"));
-//          display1.display();
-//          previousUpdate = millis();
-//        } else {
-//          count++;
-//        }
-
-
-
-
-}
-
-
-void stepperSetup(int maxSpeed_, int maxAcceleration_) {
-  pinMode(32, OUTPUT);    //dissable & enable pin for the stepper controller
-  digitalWrite(32, HIGH);   //turn off the stepper driver to keep heat down and save power
-  pinMode(33, INPUT_PULLUP);    //cont. run button
-  pinMode(25, INPUT_PULLUP);    //canned distance button
-  stepper.setMaxSpeed(maxSpeed_);
-  stepper.setAcceleration(maxAcceleration_);
-}
-
-=======
     stepper1Control(2600, 3000);
     stepper2Control(2600, 3000);
 
@@ -242,7 +192,6 @@ void stepper2Setup(int maxSpeed_, int maxAcceleration_) {
 }
 
 
->>>>>>> Stashed changes
 void display_0_Setup() {    //on the left side
   display0.clearDisplay();
 
@@ -336,10 +285,5 @@ void stepper2Control(int maxSpeed, int maxAcceleration) {
     digitalWrite(32, HIGH);
   }
 
-<<<<<<< Updated upstream
-  stepper.run();    //run any steps qued for the stepper
-}
-=======
   stepper2.run();    //run any steps qued for the stepper
 }
->>>>>>> Stashed changes
