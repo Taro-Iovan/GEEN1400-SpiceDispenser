@@ -6,11 +6,7 @@
 // Copyright (C) 2012 Mike McCauley
 // $Id: Random.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
-<<<<<<< Updated upstream
-bool debug = false;
-=======
 bool debug = true;
->>>>>>> Stashed changes
 long int count = 0; //temp work around to display slowing the stepper down
 long int previousUpdate = 0;
 
@@ -38,10 +34,10 @@ Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define LOADCELL_SCK_PIN  4
 HX711 scale1;
 
-//#define calibration_factor2 -7050.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
-//#define LOADCELL_DOUT_PIN  27
-//#define LOADCELL_SCK_PIN  26
-//HX711 scale2;
+#define calibration_factor2 -7050.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define LOADCELL_DOUT_PIN2  27
+#define LOADCELL_SCK_PIN2  26
+HX711 scale2;
 
 
 
@@ -80,7 +76,7 @@ void setup()
   //
     scale1Setup();
 
-    //scale2Setup();
+    scale2Setup();
 
 
   //
@@ -220,12 +216,12 @@ void scale1Setup() {
 
 }
 
-// void scale2Setup() {
-//   scale2.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-//   scale2.set_scale(calibration_factor2); //This value is obtained by using the SparkFun_HX711_Calibration sketch
-//   scale2.tare(); //Assuming there is no weight on the scale2 at start up, reset the scale2 to 0
+void scale2Setup() {
+  scale2.begin(LOADCELL_DOUT_PIN2, LOADCELL_SCK_PIN2);
+  scale2.set_scale(calibration_factor2); //This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scale2.tare(); //Assuming there is no weight on the scale2 at start up, reset the scale2 to 0
 
-// }
+}
 
 void stepper1Control(int maxSpeed, int maxAcceleration) {
   if(digitalRead(33) == 0) {  //button 1 pressed -> run while button is pressed
