@@ -1,0 +1,2 @@
+Pin 1: GND - Black
+Pin 2: VCC - Brown/Red
