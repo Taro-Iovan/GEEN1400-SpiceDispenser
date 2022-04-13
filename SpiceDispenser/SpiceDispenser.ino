@@ -150,8 +150,8 @@ void core_0(void * nullParam) {
   //Stepper Control
   //
   //
-    stepper1Control(2600, 3000);
-    stepper2Control(2600, 3000);
+    stepper1Control(1300, 3000);
+    stepper2Control(2000, 3000);
     // Serial.println(F("core 0"));
     // delay(500);
     TIMERG0.wdt_wprotect=TIMG_WDT_WKEY_VALUE;
@@ -329,7 +329,7 @@ void scale2Setup() {
 void stepper1Control(int maxSpeed, int maxAcceleration) {
   if(digitalRead(33) == 0) {  //button 1 pressed -> run while button is pressed
     digitalWrite(32, LOW);    //when pin is low the stepper driver should turn on
-    stepper1.setSpeed(1300);
+    stepper1.setSpeed(maxSpeed);
     stepper1.runSpeed();
     stepper1.move(0);
 
@@ -351,6 +351,8 @@ void stepper1Control(int maxSpeed, int maxAcceleration) {
     stepper1.move(0);
     stepper2.move(0);
     digitalWrite(32, HIGH);
+  } else {
+    stepper1.move(0);
   }
 
   stepper1.run();    //run any steps qued for the stepper
@@ -370,16 +372,16 @@ void stepper2Control(int maxSpeed, int maxAcceleration) {
     digitalWrite(32, LOW);    //when pin is low the stepper driver should turn on
     
     if (stepper2.distanceToGo() == 0) {
-      stepper2.setAcceleration(3000);
-      stepper2.setMaxSpeed(2000);
+      stepper2.setAcceleration(maxAcceleration);
+      stepper2.setMaxSpeed(maxSpeed);
       stepper2.move(2000);
-      stepper2.setSpeed(2000);
+      stepper2.setSpeed(maxSpeed);
       stepper2.runSpeedToPosition();
     }
     
   }
    else if (digitalRead(25) == 1 && stepper2.distanceToGo() == 0 && stepper1.distanceToGo()) {   //wait to turn off untill the button is released and or the stepper has reached it's target dest.
-    stepper1.move(0);
+    //stepper1.move(0);
     stepper2.move(0);
     digitalWrite(32, HIGH);
   }
