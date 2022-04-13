@@ -6,6 +6,11 @@
 // Copyright (C) 2012 Mike McCauley
 // $Id: Random.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
+#include "soc/timer_group_struct.h"
+#include "soc/timer_group_reg.h"
+TaskHandle_t handle_core_0;
+TaskHandle_t handle_core_1;
+
 bool debug = true;
 long int count = 0; //temp work around to display slowing the stepper down
 long int previousUpdate = 0;
@@ -107,37 +112,65 @@ void setup()
   display1.setCursor(0,0);
   display1.print(F("Current Load Cell Reading: "));
   display1.display();
+
+  //
+  //
+  //Multi Threading
+  //
+  //
+    //Core 0
+      xTaskCreatePinnedToCore(
+                    core_0,   /* Task function. */
+                    "stepperDrive",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &handle_core_0,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+  delay(500);
+  // Serial.println(F("first core setup"));
+    //Core 1
+        xTaskCreatePinnedToCore(
+                      core_1,   /* Task function. */
+                      "displayReadings",     /* name of task. */
+                      10000,       /* Stack size of task */
+                      NULL,        /* parameter of the task */
+                      1,           /* priority of the task */
+                      &handle_core_1,      /* Task handle to keep track of created task */
+                      1);          /* pin task to core 0 */                  
+    delay(500);
+    // Serial.println(F("seccond core setup"));
+
 }
 
-void loop()
-{
-  //
+void core_0(void * nullParam) {
+ for(;;) {
+   //
   //
   //Stepper Control
   //
   //
     stepper1Control(2600, 3000);
     stepper2Control(2600, 3000);
+    // Serial.println(F("core 0"));
+    // delay(500);
+    TIMERG0.wdt_wprotect=TIMG_WDT_WKEY_VALUE;
+    TIMERG0.wdt_feed=1;
+    TIMERG0.wdt_wprotect=0;
 
-  //
-  //
-  //Display 0 control
-  //
-  //
-//    display0.setTextSize(1);
-//    display0.setTextColor(SSD1306_WHITE);
-//    display0.setCursor(0,0);
-//    display0.print(F("Green Button: Stepper Runs While Pressed\n Yellow Button: Stepper Moves A Programmed Number Of Steps With Acceleration"));
-//    display0.display();
+ }
 
-  
-  //
-  //
-  //Display 1 control
-  //
-  //
-   
-      if(millis() - previousUpdate >= 1000) {
+
+}
+
+void core_1(void * nullParam) {
+
+  for(;;) {
+    // Serial.println(F("core 1"));
+    //displayReadings();
+    // delay(500);
+
+    if(millis() - previousUpdate >= 1000 || 1 == 1) {
         //clear the display
         display1.clearDisplay();
         display1.setTextSize(1);
@@ -164,6 +197,70 @@ void loop()
       } else {
         count++;
       }
+
+  }
+
+
+
+
+}
+
+
+void loop()
+{
+  //
+  //
+  //Stepper Control
+  //
+  //
+    // stepper1Control(2600, 3000);
+    // stepper2Control(2600, 3000);
+
+  //
+  //
+  //Display 0 control
+  //
+  //
+//    display0.setTextSize(1);
+//    display0.setTextColor(SSD1306_WHITE);
+//    display0.setCursor(0,0);
+//    display0.print(F("Green Button: Stepper Runs While Pressed\n Yellow Button: Stepper Moves A Programmed Number Of Steps With Acceleration"));
+//    display0.display();
+
+  
+  //
+  //
+  //Display 1 control
+  //
+  //
+   
+      // if(millis() - previousUpdate >= 1000) {
+      //   //clear the display
+      //   display1.clearDisplay();
+      //   display1.setTextSize(1);
+      //   display1.setTextColor(SSD1306_WHITE);
+      //   display1.setCursor(0,0);
+      //   display1.print(F("Current Load Cell Total: "));
+      //   //display1.display();
+      //   char temp_char[15];
+      //   int temp = scale1.get_units();
+      //   itoa(temp, temp_char, 10);
+      //   display1.print(F(temp_char));
+      //     display1.print(F("\n"));
+      //   temp = scale2.get_units();
+      //   itoa(temp, temp_char, 10);
+      //   display1.print(F(temp_char));
+      //     display1.print(F("\n"));
+      //   temp += scale1.get_units();
+      //   //temp = 50;
+      //   itoa(temp, temp_char, 10);
+
+      //   display1.print(F(temp_char));
+      //   display1.display();
+      //   previousUpdate = millis();
+      // } else {
+      //   count++;
+      // }
 
 
 
