@@ -75,7 +75,6 @@ void setup()
   //
   //
     scale1Setup();
-
     scale2Setup();
 
 
@@ -144,12 +143,19 @@ void loop()
         display1.setTextSize(1);
         display1.setTextColor(SSD1306_WHITE);
         display1.setCursor(0,0);
-        display1.print(F("Current Load Cell Reading: "));
+        display1.print(F("Current Load Cell Total: "));
         //display1.display();
-  
-        int temp = scale1.get_units();
-        //temp = 50;
         char temp_char[15];
+        int temp = scale1.get_units();
+        itoa(temp, temp_char, 10);
+        display1.print(F(temp_char));
+          display1.print(F("\n"));
+        temp = scale2.get_units();
+        itoa(temp, temp_char, 10);
+        display1.print(F(temp_char));
+          display1.print(F("\n"));
+        temp += scale1.get_units();
+        //temp = 50;
         itoa(temp, temp_char, 10);
 
         display1.print(F(temp_char));
