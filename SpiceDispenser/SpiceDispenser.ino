@@ -6,6 +6,9 @@
 // Copyright (C) 2012 Mike McCauley
 // $Id: Random.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
+#include "soc/timer_group_struct.h"
+#include "soc/timer_group_reg.h"
+
 TaskHandle_t handle_core_0;
 TaskHandle_t handle_core_1;
 
@@ -41,18 +44,14 @@ HX711 scale;
 
 void setup()
 {  
-  if (debug) {
+
     Serial.begin(9600);
 
-    if(!display0.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS0)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-    }
+    // Serial.println(F("startup"));
 
-  } else {
     display0.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS0);
     display1.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS1);
-  }
+  
 
   //
   //
@@ -60,9 +59,10 @@ void setup()
   //
   //
     stepperSetup(2600, 3000);
-
+    // Serial.println(F("stepper setup"));
     display_0_Setup();  //identify and then chose pick one for spices and the other for weight
     display_1_Setup();  //
+    // Serial.println(F("display setup"));
 
   //
   //
@@ -86,6 +86,8 @@ void setup()
   display1.print(F("Current Load Cell Reading: "));
   display1.display();
 
+  // Serial.println(F("run displays"));
+
   //
   //
   //Multi Threading
@@ -101,6 +103,7 @@ void setup()
                     &handle_core_0,      /* Task handle to keep track of created task */
                     0);          /* pin task to core 0 */                  
   delay(500);
+  // Serial.println(F("first core setup"));
     //Core 1
         xTaskCreatePinnedToCore(
                       core_1,   /* Task function. */
@@ -111,22 +114,32 @@ void setup()
                       &handle_core_1,      /* Task handle to keep track of created task */
                       1);          /* pin task to core 0 */                  
     delay(500);
+    // Serial.println(F("seccond core setup"));
 
 
 }
 
 void core_0(void * nullParam) {
-//  for(;;) {
-//    stepperControl(2600, 3000);
-//
-//
-//  }
+ for(;;) {
+   stepperControl(2600, 3000);
+    // Serial.println(F("core 0"));
+    // delay(500);
+    TIMERG0.wdt_wprotect=TIMG_WDT_WKEY_VALUE;
+    TIMERG0.wdt_feed=1;
+    TIMERG0.wdt_wprotect=0;
 
+ }
 
 
 }
 
 void core_1(void * nullParam) {
+
+  for(;;) {
+    // Serial.println(F("core 1"));
+    //displayReadings();
+    // delay(500);
+  }
 
 
 
@@ -136,7 +149,11 @@ void core_1(void * nullParam) {
 
 void loop()
 {
-  
+  // Serial.println(F("loop running"));
+
+  // delay(500);
+
+
 }
 
 
