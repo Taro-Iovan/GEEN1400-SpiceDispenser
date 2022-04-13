@@ -170,7 +170,7 @@ void core_1(void * nullParam) {
     //displayReadings();
     // delay(500);
 
-    if(millis() - previousUpdate >= 1000 || 1 == 1) {
+    //if(millis() - previousUpdate >= 1000 || 1 == 1) {
         //clear the display
         display1.clearDisplay();
         display1.setTextSize(1);
@@ -194,9 +194,9 @@ void core_1(void * nullParam) {
         display1.print(F(temp_char));
         display1.display();
         previousUpdate = millis();
-      } else {
-        count++;
-      }
+      // } else {
+      //   count++;
+      // }
 
   }
 
