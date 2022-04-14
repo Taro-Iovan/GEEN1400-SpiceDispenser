@@ -150,7 +150,7 @@ void core_0(void * nullParam) {
   //Stepper Control
   //
   //
-    stepper1Control(1300, 3000);
+    stepper1Control(-1300, 3000);
     stepper2Control(2000, 3000);
     // Serial.println(F("core 0"));
     // delay(500);
