@@ -37,6 +37,15 @@ HX711 scale1;
 #define LOADCELL_SCK_PIN2 26
 HX711 scale2;
 
+#define buttonPin1 34
+#define buttonPin2 35
+#define buttonPin3 12
+#define buttonPin4 13
+#define buttonPin5 14
+#define buttonPin6 19
+
+volatile bool buttonState[6] = {false, false, false, false, false, false};
+
 void setup()
 {
   if (debug)
@@ -57,7 +66,7 @@ void setup()
   // Stepper Control
   //
   //
-  stepper1Setup(2600, 3000);
+  stepper1Setup(2600, 3000);  //dispense
   stepper2Setup(2600, 3000);
 
   //
@@ -99,6 +108,25 @@ void setup()
 
   //
   //
+  // Button control
+  //
+  //
+  pinMode(buttonPin1, INPUT_PULLUP);
+  pinMode(buttonPin2, INPUT_PULLUP);
+  pinMode(buttonPin3, INPUT_PULLUP);
+  pinMode(buttonPin4, INPUT_PULLUP);
+  pinMode(buttonPin5, INPUT_PULLUP);
+  pinMode(buttonPin6, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(buttonPin1), changeButtonState1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(buttonPin2), changeButtonState2, FALLING);
+  attachInterrupt(digitalPinToInterrupt(buttonPin3), changeButtonState3, FALLING);
+  attachInterrupt(digitalPinToInterrupt(buttonPin4), changeButtonState4, FALLING);
+  attachInterrupt(digitalPinToInterrupt(buttonPin5), changeButtonState5, FALLING);
+  attachInterrupt(digitalPinToInterrupt(buttonPin6), changeButtonState6, FALLING);
+
+  //
+  //
   // Multi Threading
   //
   //
@@ -133,8 +161,8 @@ void core_0(void *nullParam)
     // Stepper Control
     //
     //
-    stepper1Control(-1300, 3000);
-    stepper2Control(2000, 3000);
+    stepper1Control(-700, 2000);  //dispenser stepper
+    stepper2Control(1200, 500, 50);    //rotation stepper
 
     //
     //
@@ -178,7 +206,23 @@ void core_1(void *nullParam)
 
     display1.print(F(temp_char));
     display1.display();
-    previousUpdate = millis();
+    //previousUpdate = millis();
+
+
+    display0.clearDisplay();
+    display0.setTextSize(1);
+    display0.setTextColor(SSD1306_WHITE);
+    display0.setCursor(0, 0);
+    for(int i = 0; i < 6; i++)
+    {
+      if(buttonState[i])
+      {
+        display0.print(F("Button "));
+        display0.print(i);
+        display0.print(F(" is pressed\n"));
+      }
+    }
+    display0.display();
   }
 }
 
@@ -243,12 +287,12 @@ void scale2Setup()
   scale2.tare();                         // Assuming there is no weight on the scale2 at start up, reset the scale2 to 0
 }
 
-void stepper1Control(int maxSpeed, int maxAcceleration)
+void stepper1Control(int speed, int maxAcceleration)
 {
   if (digitalRead(33) == 0)
   {                        // button 1 pressed -> run while button is pressed
     digitalWrite(32, LOW); // when pin is low the stepper driver should turn on
-    stepper1.setSpeed(maxSpeed);
+    stepper1.setSpeed(speed);
     stepper1.runSpeed();
     stepper1.move(0);
   }
@@ -266,7 +310,7 @@ void stepper1Control(int maxSpeed, int maxAcceleration)
   stepper1.run(); // run any steps qued for the stepper
 }
 
-void stepper2Control(int maxSpeed, int maxAcceleration)
+void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
 {
   // if(digitalRead(25) == 0) {  //button 1 pressed -> run while button is pressed
   //   digitalWrite(32, LOW);    //when pin is low the stepper driver should turn on
@@ -283,11 +327,12 @@ void stepper2Control(int maxSpeed, int maxAcceleration)
 
     if (stepper2.distanceToGo() == 0)
     {
+      stepper2.setSpeed(0);
       stepper2.setAcceleration(maxAcceleration);
       stepper2.setMaxSpeed(maxSpeed);
-      stepper2.move(2000);
-      stepper2.setSpeed(maxSpeed);
-      stepper2.runSpeedToPosition();
+      stepper2.move(distanceToStep);
+      //stepper2.setSpeed(maxSpeed);
+      //stepper2.runSpeedToPosition();
     }
   }
   else if (digitalRead(25) == 1 && stepper2.distanceToGo() == 0 && stepper1.distanceToGo())
@@ -298,4 +343,29 @@ void stepper2Control(int maxSpeed, int maxAcceleration)
   }
 
   stepper2.run(); // run any steps qued for the stepper
+}
+
+//attach interup cannot use functions with parameters...
+void changeButtonState1 {
+  buttonState[1] = !buttonState[1];
+}
+
+void changeButtonState2 {
+  buttonState[2] = !buttonState[2];
+}
+
+void changeButtonState3 {
+  buttonState[3] = !buttonState[3];
+}
+
+void changeButtonState4 {
+  buttonState[4] = !buttonState[4];
+}
+
+void changeButtonState5 {
+  buttonState[5] = !buttonState[5];
+}
+
+void changeButtonState6 {
+  buttonState[6] = !buttonState[6];
 }
