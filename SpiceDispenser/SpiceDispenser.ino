@@ -7,8 +7,14 @@ TaskHandle_t handle_core_0;
 TaskHandle_t handle_core_1;
 
 bool debug = true;
-long int count = 0; // temp work around to display slowing the stepper down
-long int previousUpdate = 0;
+long int debounce = 200; // button debounce time (ms)
+long int previousUpdate0 = 0;
+long int previousUpdate1 = 0;
+long int previousUpdate2 = 0;
+long int previousUpdate3 = 0;
+long int previousUpdate4 = 0;
+long int previousUpdate5 = 0;
+
 
 #include <AccelStepper.h>
 AccelStepper stepper1(1, 2, 15);  //(mode, pulse, dir)
@@ -37,12 +43,13 @@ HX711 scale1;
 #define LOADCELL_SCK_PIN2 26
 HX711 scale2;
 
-#define buttonPin1 34
-#define buttonPin2 35
-#define buttonPin3 12
-#define buttonPin4 13
-#define buttonPin5 14
-#define buttonPin6 19
+
+#define buttonPin0 34
+#define buttonPin1 35
+#define buttonPin2 12
+#define buttonPin3 13
+#define buttonPin4 14
+#define buttonPin5 19
 
 volatile bool buttonState[6] = {false, false, false, false, false, false};
 
@@ -111,19 +118,19 @@ void setup()
   // Button control
   //
   //
+  pinMode(buttonPin0, INPUT_PULLUP);
   pinMode(buttonPin1, INPUT_PULLUP);
   pinMode(buttonPin2, INPUT_PULLUP);
   pinMode(buttonPin3, INPUT_PULLUP);
   pinMode(buttonPin4, INPUT_PULLUP);
   pinMode(buttonPin5, INPUT_PULLUP);
-  pinMode(buttonPin6, INPUT_PULLUP);
 
+  attachInterrupt(digitalPinToInterrupt(buttonPin0), changeButtonState0, FALLING);
   attachInterrupt(digitalPinToInterrupt(buttonPin1), changeButtonState1, FALLING);
   attachInterrupt(digitalPinToInterrupt(buttonPin2), changeButtonState2, FALLING);
   attachInterrupt(digitalPinToInterrupt(buttonPin3), changeButtonState3, FALLING);
   attachInterrupt(digitalPinToInterrupt(buttonPin4), changeButtonState4, FALLING);
   attachInterrupt(digitalPinToInterrupt(buttonPin5), changeButtonState5, FALLING);
-  attachInterrupt(digitalPinToInterrupt(buttonPin6), changeButtonState6, FALLING);
 
   //
   //
@@ -215,11 +222,13 @@ void core_1(void *nullParam)
     display0.setCursor(0, 0);
     for(int i = 0; i < 6; i++)
     {
+      display0.print(F("Button "));
+      display0.print(i);
       if(buttonState[i])
       {
-        display0.print(F("Button "));
-        display0.print(i);
         display0.print(F(" is pressed\n"));
+      } else {
+        display0.print(F(" not pressed\n"));
       }
     }
     display0.display();
@@ -346,26 +355,74 @@ void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
 }
 
 //attach interup cannot use functions with parameters...
-void changeButtonState1 {
-  buttonState[1] = !buttonState[1];
+void changeButtonState0() {
+  if (previousUpdate0 == 0){
+    previousUpdate0 = millis();
+    buttonState[0] = !buttonState[0];
+  }
+  else if (millis() - previousUpdate0 > debounce) {
+    previousUpdate0 = millis();
+    buttonState[0] = !buttonState[0];
+  }
+  //buttonState[0] = !buttonState[0];
 }
 
-void changeButtonState2 {
-  buttonState[2] = !buttonState[2];
+void changeButtonState1() {
+  // buttonState[1] = !buttonState[1];
+  if (previousUpdate1 == 0){
+    previousUpdate1 = millis();
+    buttonState[1] = !buttonState[1];
+  }
+  else if (millis() - previousUpdate1 > debounce) {
+    previousUpdate1 = millis();
+    buttonState[1] = !buttonState[1];
+  }
 }
 
-void changeButtonState3 {
-  buttonState[3] = !buttonState[3];
+void changeButtonState2() {
+  // buttonState[2] = !buttonState[2];
+  if (previousUpdate2 == 0){
+    previousUpdate2 = millis();
+    buttonState[2] = !buttonState[2];
+  }
+  else if (millis() - previousUpdate2 > debounce) {
+    previousUpdate2 = millis();
+    buttonState[2] = !buttonState[2];
+  }
 }
 
-void changeButtonState4 {
-  buttonState[4] = !buttonState[4];
+void changeButtonState3() {
+  // buttonState[3] = !buttonState[3];
+  if (previousUpdate3 == 0){
+    previousUpdate3 = millis();
+    buttonState[3] = !buttonState[3];
+  }
+  else if (millis() - previousUpdate3 > debounce) {
+    previousUpdate3 = millis();
+    buttonState[3] = !buttonState[3];
+  }
 }
 
-void changeButtonState5 {
-  buttonState[5] = !buttonState[5];
+void changeButtonState4() {
+  // buttonState[4] = !buttonState[4];
+  if (previousUpdate4 == 0){
+    previousUpdate4 = millis();
+    buttonState[4] = !buttonState[4];
+  }
+  else if (millis() - previousUpdate4 > debounce) {
+    previousUpdate4 = millis();
+    buttonState[4] = !buttonState[4];
+  }
 }
 
-void changeButtonState6 {
-  buttonState[6] = !buttonState[6];
+void changeButtonState5() {
+  // buttonState[5] = !buttonState[5];
+  if (previousUpdate5 == 0){
+    previousUpdate5 = millis();
+    buttonState[5] = !buttonState[5];
+  }
+  else if (millis() - previousUpdate5 > debounce) {
+    previousUpdate5 = millis();
+    buttonState[5] = !buttonState[5];
+  }
 }
