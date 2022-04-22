@@ -6,8 +6,8 @@
 TaskHandle_t handle_core_0;
 TaskHandle_t handle_core_1;
 
-bool debug = false;
-long int debounce = 300; // button debounce time (ms)
+bool debug = true;
+long int debounce = 200; // button debounce time (ms)
 long int previousUpdate0 = 0;
 long int previousUpdate1 = 0;
 long int previousUpdate2 = 0;
