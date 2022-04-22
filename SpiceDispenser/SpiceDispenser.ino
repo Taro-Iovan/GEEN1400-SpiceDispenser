@@ -6,7 +6,7 @@
 TaskHandle_t handle_core_0;
 TaskHandle_t handle_core_1;
 
-bool debug = true;
+bool debug = false;
 long int debounce = 300; // button debounce time (ms)
 long int previousUpdate0 = 0;
 long int previousUpdate1 = 0;
@@ -55,7 +55,7 @@ volatile bool buttonState[6] = {false, false, false, false, false, false};
 
 void setup()
 {
-  if (debug)
+  if (debug == true)
   {
     Serial.begin(9600);
 
@@ -75,6 +75,8 @@ void setup()
   //
   stepper1Setup(2600, 3000);  //dispense
   stepper2Setup(2600, 3000);
+
+  if (debug == true)  Serial.println("stepper setup");
 
   //
   //
@@ -157,6 +159,8 @@ void setup()
       &handle_core_1,    /* Task handle to keep track of created task */
       1);                /* pin task to core 0 */
   delay(500);
+
+  if (debug == true) Serial.println("multithreading setup complete");
 }
 
 void core_0(void *nullParam)
@@ -188,6 +192,7 @@ void core_1(void *nullParam)
 
   for (;;)
   {
+    if (debug == true) Serial.println("core_1");
     //
     //
     // Display control
@@ -237,6 +242,7 @@ void core_1(void *nullParam)
 
 void loop()
 {
+  Serial.println("loop");
 }
 
 void stepper1Setup(int maxSpeed_, int maxAcceleration_)
@@ -426,3 +432,10 @@ void changeButtonState5() {
     buttonState[5] = !buttonState[5];
   }
 }
+
+// void menu() {
+  
+
+
+
+// }
