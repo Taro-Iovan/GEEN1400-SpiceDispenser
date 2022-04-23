@@ -16,13 +16,17 @@ long int previousUpdate4 = 0;
 long int previousUpdate5 = 0;
 
 int cursor = 0;
+bool dispensing = false;
+bool rotating = false;
 
 
 #include <AccelStepper.h>
 AccelStepper stepper1(1, 2, 15);  //(mode, pulse, dir)
 AccelStepper stepper2(1, 16, 17); //(mode, pulse, dir)   //needs different pins
 int stepper1Enable = 32;
+bool stepper1Enabled = false;
 int stepper2Enable = 5;
+bool stepper2Enabled = false;
 
 #include <SPI.h>
 #include <Wire.h>
@@ -37,15 +41,18 @@ Adafruit_SSD1306 display0(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #include "HX711.h"
+int scaleTotal = 0;
 #define calibration_factor1 -8230.0 // This value is obtained using the SparkFun_HX711_Calibration sketch
 #define LOADCELL_DOUT_PIN 0
 #define LOADCELL_SCK_PIN 4
 HX711 scale1;
+int scale1Value = 0;
 
 #define calibration_factor2 -8230.0 // This value is obtained using the SparkFun_HX711_Calibration sketch
 #define LOADCELL_DOUT_PIN2 27
 #define LOADCELL_SCK_PIN2 26
 HX711 scale2;
+int scale2Value = 0;
 
 
 #define buttonPin0 34
@@ -61,7 +68,7 @@ void setup()
 {
   if (debug == true)
   {
-    Serial.begin(9600);
+    //Serial.begin(9600);
 
     display0.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS0);
     display1.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS1);
@@ -176,8 +183,21 @@ void core_0(void *nullParam)
     // Stepper Control
     //
     //
-    stepper1Control(-700, 2000);  //dispenser stepper
-    stepper2Control(1200, 500, 1120);    //rotation stepper
+    dispensorStepper(-700, 2000, -10);  //dispenser stepper
+    rotationStepper(1200, 500, 1120);    //rotation stepper
+
+    if(debug == true) {
+      stepper1Control(-700, 2000);  //dispenser stepper
+      stepper2Controll(1200, 500, 1120);  //rotation stepper
+    }
+
+    // if (10 < 100) {
+    //   toggleStepper1(true);
+    //   stepper1.setSpeed(100);
+    //   stepper1.runSpeed();
+    //   stepper1.move(0);
+    //   stepper1.run();
+    // }
 
     //
     //
@@ -209,10 +229,12 @@ void core_1(void *nullParam)
     display1.print(F("Current Load Cell Total: "));
     char temp_char[15];
     int temp = scale1.get_units();
+    scale1Value = temp;
     itoa(temp, temp_char, 10);
     display1.print(F(temp_char));
     display1.print(F("\n"));
     temp = scale2.get_units();
+    scale2Value = temp;
     itoa(temp, temp_char, 10);
     display1.print(F(temp_char));
     display1.print(F("\n"));
@@ -252,7 +274,8 @@ void loop()
 void stepper1Setup(int maxSpeed_, int maxAcceleration_)
 {
   pinMode(stepper1Enable, OUTPUT);       // dissable & enable pin for the stepper controller
-  digitalWrite(stepper1Enable, HIGH);    // turn off the stepper driver to keep heat down and save power
+  // digitalWrite(stepper1Enable, HIGH);    // turn off the stepper driver to keep heat down and save power
+  toggleStepper1(false);                 // turn off the stepper driver to keep heat down and save power
   pinMode(33, INPUT_PULLUP); // cont. run button
   // pinMode(25, INPUT_PULLUP);    //canned distance button
   stepper1.setMaxSpeed(maxSpeed_);
@@ -263,7 +286,8 @@ void stepper2Setup(int maxSpeed_, int maxAcceleration_)
 {
   pinMode(stepper2Enable, OUTPUT);    //dissable & enable pin for the stepper controller
   // uses the same enable and dissable pin as stepper 1
-  digitalWrite(stepper2Enable, HIGH);   //turn off the stepper driver to keep heat down and save power
+  // digitalWrite(stepper2Enable, HIGH);   //turn off the stepper driver to keep heat down and save power
+  toggleStepper1(false);               //turn off the stepper driver to keep heat down and save power
   //  pinMode(33, INPUT_PULLUP);    //cont. run button
   //  pinMode(25, INPUT_PULLUP);    //canned distance button
   pinMode(25, INPUT_PULLUP); // run for stepper 2
@@ -306,31 +330,55 @@ void scale2Setup()
   scale2.tare();                         // Assuming there is no weight on the scale2 at start up, reset the scale2 to 0
 }
 
-void stepper1Control(int speed, int maxAcceleration)
+void dispensorStepper(int speed, int maxAcceleration, int target8thTSP)
 {
-  if (digitalRead(33) == 0)
-  {                        // button 1 pressed -> run while button is pressed
-    digitalWrite(stepper1Enable, LOW); // when pin is low the stepper driver should turn on
-    stepper1.setSpeed(speed);
-    stepper1.runSpeed();
-    stepper1.move(0);
-  }
-  else if (digitalRead(33) == 1 && stepper1.distanceToGo() == 0 && stepper2.distanceToGo() == 0)
-  { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
-    stepper1.move(0);
-    stepper2.move(0);
-    digitalWrite(stepper1Enable, HIGH);
-    
-  }
-  else
-  {
-    stepper1.move(0);
+  scaleTotal = scale1Value + scale2Value;
+  if (dispensing == true && scaleTotal < target8thTSP) {
+    if (stepper2Enabled == false) {
+      toggleStepper2(true);
+    }
+    // stepper1.setSpeed(speed);
+    // //stepper1.setAcceleration(maxAcceleration);
+    // stepper1.runSpeed();
+    // stepper1.move(20);
+    toggleStepper1(true);
+    // stepper1.run();
+  } else {
+    toggleStepper1(false);
+    // if (rotating == false) toggleStepper2(false);
+    // //stepper1.stop();
+    dispensing = false;
   }
 
-  stepper1.run(); // run any steps qued for the stepper
+
+
+
+
+
+  // if (digitalRead(33) == 0)
+  // {                        // button 1 pressed -> run while button is pressed
+  //   //digitalWrite(stepper1Enable, LOW); // when pin is low the stepper driver should turn on
+  //   toggleStepper1(true);
+  //   stepper1.setSpeed(speed);
+  //   stepper1.runSpeed();
+  //   stepper1.move(0);
+  // }
+  // else if (digitalRead(33) == 1 && stepper1.distanceToGo() == 0 && stepper2.distanceToGo() == 0 && stepper1Enabled == true)
+  // { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
+  //   stepper1.move(0);
+  //   stepper2.move(0);
+  //   //digitalWrite(stepper1Enable, HIGH);
+  //   toggleStepper1(false);
+  // }
+  // else
+  // {
+  //   stepper1.move(0);
+  // }
+
+  //stepper1.run(); // run any steps qued for the stepper
 }
 
-void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
+void rotationStepper(int maxSpeed, int maxAcceleration, int distanceToStep)
 {
   // if(digitalRead(25) == 0) {  //button 1 pressed -> run while button is pressed
   //   digitalWrite(32, LOW);    //when pin is low the stepper driver should turn on
@@ -339,34 +387,82 @@ void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
   //   stepper2.move(0);
 
   // }
-  if (digitalRead(25) == 0)
-  { // button 2 pressed runn a set distance only
-    stepper1.stop();
-    //stepper2.stop();
-    digitalWrite(stepper2Enable, LOW); // when pin is low the stepper driver should turn on
+  if (stepper2.distanceToGo() == 0) {
+   // button 2 pressed runn a set distance only
+   
+      toggleStepper2(false);
+      rotating = false;
 
-    if (stepper2.distanceToGo() == 0)
-    {
-      stepper2.setSpeed(0);
-      stepper2.setAcceleration(maxAcceleration);
-      stepper2.setMaxSpeed(maxSpeed);
-      stepper2.move(distanceToStep);
-      //stepper2.setSpeed(maxSpeed);
-      //stepper2.runSpeedToPosition();
-    }
+    // if (stepper2.distanceToGo() != 0)
+    // {
+    //   stepper2.setSpeed(0);
+    //   stepper2.setAcceleration(maxAcceleration);
+    //   stepper2.setMaxSpeed(maxSpeed);
+    //   stepper2.move(distanceToStep);
+    //   //stepper2.setSpeed(maxSpeed);
+    //   //stepper2.runSpeedToPosition();
+    // }
   }
-  else if (digitalRead(25) == 1 && stepper2.distanceToGo() == 0)
+  else if (rotating = true)
   { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
     // stepper1.move(0);
-    stepper2.move(0);
-    digitalWrite(stepper2Enable, HIGH);
+    //rotating = false;
+    //digitalWrite(stepper2Enable, HIGH);
+    toggleStepper2(true);
     // display1.clearDisplay();
     // display1.display();
   }
 
-  stepper2.run(); // run any steps qued for the stepper
+  // stepper2.run(); // run any steps qued for the stepper
 }
 
+bool toggleStepper1() {
+  if (stepper1Enabled == true) {
+    stepper1Enabled = false;
+    digitalWrite(stepper1Enable, LOW);
+    return false;
+  } else {
+    stepper1Enabled = true;
+    digitalWrite(stepper1Enable, HIGH);
+    return true;
+  }
+}
+
+bool  toggleStepper1(bool forcedState) {
+  if (forcedState == true) {
+    stepper1Enabled = true;
+    digitalWrite(stepper1Enable, LOW);
+    return true;
+  } else {
+    stepper1Enabled = false;
+    digitalWrite(stepper1Enable, HIGH);
+    return false;
+  }
+}
+
+bool toggleStepper2() {
+  if (stepper2Enabled == true) {
+    stepper2Enabled = false;
+    digitalWrite(stepper2Enable, LOW);
+    return false;
+  } else {
+    stepper2Enabled = true;
+    digitalWrite(stepper2Enable, HIGH);
+    return true;
+  }
+}
+ 
+bool toggleStepper2(bool forcedState) {
+  if (forcedState == true) {
+    stepper2Enabled = true;
+    digitalWrite(stepper2Enable, LOW);
+    return true;
+  } else {
+    stepper2Enabled = false;
+    digitalWrite(stepper2Enable, HIGH);
+    return false;
+  }
+}
 
 //attach interup cannot use functions with parameters...
 void changeButtonState0() {
@@ -398,10 +494,15 @@ void changeButtonState2() {
   if (previousUpdate2 == 0){
     previousUpdate2 = millis();
     buttonState[2] = !buttonState[2];
+    rotating = true;
+    //rotationStepper(1200, 500, 1120);
+
   }
   else if (millis() - previousUpdate2 > debounce) {
     previousUpdate2 = millis();
     buttonState[2] = !buttonState[2];
+    rotating = true;
+    //rotationStepper(1200, 500, 1120);
   }
 }
 
@@ -410,10 +511,14 @@ void changeButtonState3() {
   if (previousUpdate3 == 0){
     previousUpdate3 = millis();
     buttonState[3] = !buttonState[3];
+    dispensing = true;
+    dispensorStepper(-700, 2000, 400);
   }
   else if (millis() - previousUpdate3 > debounce) {
     previousUpdate3 = millis();
     buttonState[3] = !buttonState[3];
+    dispensing = true;
+    dispensorStepper(-700, 2000, 400);
   }
 }
 
@@ -449,3 +554,90 @@ void changeButtonState5() {
 
 
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//for debug of steppers
+void stepper1Control(int speed, int maxAcceleration)
+{
+  if (dispensing == true)
+  {                        // button 1 pressed -> run while button is pressed
+    //digitalWrite(stepper1Enable, LOW); // when pin is low the stepper driver should turn on
+    toggleStepper1(true);
+    stepper1.setSpeed(speed);
+    stepper1.runSpeed();
+    stepper1.move(0);
+  }
+  else if (digitalRead(33) == 1 && stepper1.distanceToGo() == 0 && stepper2.distanceToGo() == 0 && stepper1Enabled == true)
+  { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
+    stepper1.move(0);
+    stepper2.move(0);
+    //digitalWrite(stepper1Enable, HIGH);
+    toggleStepper1(false);
+  }
+  else
+  {
+    stepper1.move(0);
+  }
+
+  stepper1.run(); // run any steps qued for the stepper
+}
+
+
+void stepper2Controll(int maxSpeed, int maxAcceleration, int distanceToStep)
+{
+  // if(digitalRead(25) == 0) {  //button 1 pressed -> run while button is pressed
+  //   digitalWrite(32, LOW);    //when pin is low the stepper driver should turn on
+  //   stepper2.setSpeed(2000);
+  //   stepper2.runSpeed();
+  //   stepper2.move(0);
+
+  // }
+  if (rotating == true)
+  { // button 2 pressed runn a set distance only
+    stepper1.stop();
+    //stepper2.stop();
+    //digitalWrite(stepper2Enable, LOW); // when pin is low the stepper driver should turn on
+    toggleStepper2(true);
+
+    if (stepper2.distanceToGo() == 0)
+    {
+      stepper2.setSpeed(0);
+      stepper2.setAcceleration(maxAcceleration);
+      stepper2.setMaxSpeed(maxSpeed);
+      stepper2.move(distanceToStep);
+      //stepper2.setSpeed(maxSpeed);
+      //stepper2.runSpeedToPosition();
+    }
+  } else if (stepper2.distanceToGo() == 0) {
+    rotating = false;
+  }
+  else if (rotating == false && stepper2.distanceToGo() == 0 && stepper2Enabled == true)
+  { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
+    // stepper1.move(0);
+    stepper2.move(0);
+    //digitalWrite(stepper2Enable, HIGH);
+    toggleStepper2(false);
+    // display1.clearDisplay();
+    // display1.display();
+  }
+
+  stepper2.run(); // run any steps qued for the stepper
+}
