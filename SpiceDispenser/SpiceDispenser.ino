@@ -18,6 +18,8 @@ long int previousUpdate5 = 0;
 int cursor = 0;
 bool dispensing = false;
 bool rotating = false;
+int distance = 1125;
+int baseDistance = 1125;
 
 
 #include <AccelStepper.h>
@@ -183,12 +185,12 @@ void core_0(void *nullParam)
     // Stepper Control
     //
     //
-    dispensorStepper(-700, 2000, -10);  //dispenser stepper
-    rotationStepper(1200, 500, 1120);    //rotation stepper
+    dispensorStepper(-700, 2000, 50);  //dispenser stepper
+    rotationStepper(1200, 300, distance);    //rotation stepper
 
     if(debug == true) {
       stepper1Control(-700, 2000);  //dispenser stepper
-      stepper2Controll(1200, 500, 1120);  //rotation stepper
+      stepper2Controll(1200, 300, distance);  //rotation stepper
     }
 
     // if (10 < 100) {
@@ -222,53 +224,57 @@ void core_1(void *nullParam)
     // Display control
     //
     //
-    display1.clearDisplay();
-    display1.setTextSize(1);
-    display1.setTextColor(SSD1306_WHITE);
-    display1.setCursor(0, 0);
-    display1.print(F("Current Load Cell Total: "));
-    char temp_char[15];
-    int temp = scale1.get_units();
-    scale1Value = temp;
-    itoa(temp, temp_char, 10);
-    display1.print(F(temp_char));
-    display1.print(F("\n"));
-    temp = scale2.get_units();
-    scale2Value = temp;
-    itoa(temp, temp_char, 10);
-    display1.print(F(temp_char));
-    display1.print(F("\n"));
-    temp += scale1.get_units();
-    // temp = 50;
-    itoa(temp, temp_char, 10);
-
-    display1.print(F(temp_char));
-    display1.display();
-    //previousUpdate = millis();
-
-
     display0.clearDisplay();
     display0.setTextSize(1);
     display0.setTextColor(SSD1306_WHITE);
     display0.setCursor(0, 0);
-    for(int i = 0; i < 6; i++)
-    {
-      display0.print(F("Button "));
-      display0.print(i);
-      if(buttonState[i])
-      {
-        display0.print(F(" is pressed\n"));
-      } else {
-        display0.print(F(" not pressed\n"));
-      }
-    }
+    display0.print(F("\n"));
+    display0.print(F("Load Cell Total: "));
+    char temp_char[15];
+    int temp = scale1.get_units();
+    scale1Value = temp;
+    itoa(temp, temp_char, 10);
+    display0.print(F(temp_char));
+    display0.print(F("\n\n"));
+    display0.print(F("Load Cell 1: "));
+    temp = scale2.get_units();
+    scale2Value = temp;
+    itoa(temp, temp_char, 10);
+    display0.print(F(temp_char));
+    display0.print(F("\n\n"));
+    display0.print(F("Load Cell 2: "));
+    temp += scale1.get_units();
+    // temp = 50;
+    itoa(temp, temp_char, 10);
+
+    display0.print(F(temp_char));
     display0.display();
+    //previousUpdate = millis();
+
+
+    display1.clearDisplay();
+    display1.setTextSize(2);
+    display1.setTextColor(SSD1306_WHITE);
+    display1.setCursor(0, 0);
+    // for(int i = 0; i < 6; i++)
+    // {
+    //   display0.print(F("Button "));
+    //   display0.print(i);
+    //   if(buttonState[i])
+    //   {
+    //     display0.print(F(" is pressed\n"));
+    //   } else {
+    //     display0.print(F(" not pressed\n"));
+    //   }
+    // }
+    display1.print(F("Team\nScuba\nLemurs!"));
+    display1.display();
   }
 }
 
 void loop()
 {
-  Serial.println("loop");
+  //Serial.println("loop");
 }
 
 void stepper1Setup(int maxSpeed_, int maxAcceleration_)
@@ -469,10 +475,14 @@ void changeButtonState0() {
   if (previousUpdate0 == 0){
     previousUpdate0 = millis();
     buttonState[0] = !buttonState[0];
+    distance = baseDistance;
+    rotating = true;
   }
   else if (millis() - previousUpdate0 > debounce) {
     previousUpdate0 = millis();
     buttonState[0] = !buttonState[0];
+    distance = baseDistance;
+    rotating = true;
   }
   //buttonState[0] = !buttonState[0];
 }
@@ -482,10 +492,14 @@ void changeButtonState1() {
   if (previousUpdate1 == 0){
     previousUpdate1 = millis();
     buttonState[1] = !buttonState[1];
+    distance = baseDistance;
+    rotating = true;
   }
   else if (millis() - previousUpdate1 > debounce) {
     previousUpdate1 = millis();
     buttonState[1] = !buttonState[1];
+    distance = baseDistance;
+    rotating = true;
   }
 }
 
@@ -494,6 +508,7 @@ void changeButtonState2() {
   if (previousUpdate2 == 0){
     previousUpdate2 = millis();
     buttonState[2] = !buttonState[2];
+    distance = baseDistance;
     rotating = true;
     //rotationStepper(1200, 500, 1120);
 
@@ -501,6 +516,7 @@ void changeButtonState2() {
   else if (millis() - previousUpdate2 > debounce) {
     previousUpdate2 = millis();
     buttonState[2] = !buttonState[2];
+    distance = baseDistance;
     rotating = true;
     //rotationStepper(1200, 500, 1120);
   }
@@ -527,12 +543,18 @@ void changeButtonState4() {
   if (previousUpdate4 == 0){
     previousUpdate4 = millis();
     buttonState[4] = !buttonState[4];
+    int temp1 = baseDistance * 3;
+    distance = (temp1);
+    rotating = true;
   }
   else if (millis() - previousUpdate4 > debounce) {
     previousUpdate4 = millis();
     buttonState[4] = !buttonState[4];
+    int temp1 = baseDistance * 3;
+    distance = (temp1);
+    rotating = true;
   }
-  digitalWrite(stepper2Enable, LOW);
+  // digitalWrite(stepper2Enable, LOW);
 }
 
 void changeButtonState5() {
@@ -540,12 +562,18 @@ void changeButtonState5() {
   if (previousUpdate5 == 0){
     previousUpdate5 = millis();
     buttonState[5] = !buttonState[5];
+    int temp1 = baseDistance;
+    distance = (temp1);
+    rotating = true;
   }
   else if (millis() - previousUpdate5 > debounce) {
     previousUpdate5 = millis();
     buttonState[5] = !buttonState[5];
+    int temp1 = baseDistance;
+    distance = (temp1);
+    rotating = true;
   }
-  digitalWrite(stepper2Enable, HIGH);
+  // digitalWrite(stepper2Enable, HIGH);
 }
 
 // void menu() {
@@ -581,16 +609,18 @@ void stepper1Control(int speed, int maxAcceleration)
   {                        // button 1 pressed -> run while button is pressed
     //digitalWrite(stepper1Enable, LOW); // when pin is low the stepper driver should turn on
     toggleStepper1(true);
+    toggleStepper2(true);
     stepper1.setSpeed(speed);
     stepper1.runSpeed();
     stepper1.move(0);
   }
-  else if (digitalRead(33) == 1 && stepper1.distanceToGo() == 0 && stepper2.distanceToGo() == 0 && stepper1Enabled == true)
+  else if (rotating = false && dispensing == false && stepper1.distanceToGo() == 0 && stepper2.distanceToGo() == 0 && stepper1Enabled == true)
   { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
     stepper1.move(0);
     stepper2.move(0);
     //digitalWrite(stepper1Enable, HIGH);
     toggleStepper1(false);
+    toggleStepper2(false);
   }
   else
   {
