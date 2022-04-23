@@ -15,10 +15,14 @@ long int previousUpdate3 = 0;
 long int previousUpdate4 = 0;
 long int previousUpdate5 = 0;
 
+int cursor = 0;
+
 
 #include <AccelStepper.h>
 AccelStepper stepper1(1, 2, 15);  //(mode, pulse, dir)
 AccelStepper stepper2(1, 16, 17); //(mode, pulse, dir)   //needs different pins
+int stepper1Enable = 32;
+int stepper2Enable = 5;
 
 #include <SPI.h>
 #include <Wire.h>
@@ -173,7 +177,7 @@ void core_0(void *nullParam)
     //
     //
     stepper1Control(-700, 2000);  //dispenser stepper
-    stepper2Control(1200, 500, 50);    //rotation stepper
+    stepper2Control(1200, 500, 1120);    //rotation stepper
 
     //
     //
@@ -247,8 +251,8 @@ void loop()
 
 void stepper1Setup(int maxSpeed_, int maxAcceleration_)
 {
-  pinMode(32, OUTPUT);       // dissable & enable pin for the stepper controller
-  digitalWrite(32, HIGH);    // turn off the stepper driver to keep heat down and save power
+  pinMode(stepper1Enable, OUTPUT);       // dissable & enable pin for the stepper controller
+  digitalWrite(stepper1Enable, HIGH);    // turn off the stepper driver to keep heat down and save power
   pinMode(33, INPUT_PULLUP); // cont. run button
   // pinMode(25, INPUT_PULLUP);    //canned distance button
   stepper1.setMaxSpeed(maxSpeed_);
@@ -257,9 +261,9 @@ void stepper1Setup(int maxSpeed_, int maxAcceleration_)
 
 void stepper2Setup(int maxSpeed_, int maxAcceleration_)
 {
-  // pinMode(32, OUTPUT);    //dissable & enable pin for the stepper controller
+  pinMode(stepper2Enable, OUTPUT);    //dissable & enable pin for the stepper controller
   // uses the same enable and dissable pin as stepper 1
-  // digitalWrite(32, HIGH);   //turn off the stepper driver to keep heat down and save power
+  digitalWrite(stepper2Enable, HIGH);   //turn off the stepper driver to keep heat down and save power
   //  pinMode(33, INPUT_PULLUP);    //cont. run button
   //  pinMode(25, INPUT_PULLUP);    //canned distance button
   pinMode(25, INPUT_PULLUP); // run for stepper 2
@@ -306,7 +310,7 @@ void stepper1Control(int speed, int maxAcceleration)
 {
   if (digitalRead(33) == 0)
   {                        // button 1 pressed -> run while button is pressed
-    digitalWrite(32, LOW); // when pin is low the stepper driver should turn on
+    digitalWrite(stepper1Enable, LOW); // when pin is low the stepper driver should turn on
     stepper1.setSpeed(speed);
     stepper1.runSpeed();
     stepper1.move(0);
@@ -315,7 +319,8 @@ void stepper1Control(int speed, int maxAcceleration)
   { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
     stepper1.move(0);
     stepper2.move(0);
-    digitalWrite(32, HIGH);
+    digitalWrite(stepper1Enable, HIGH);
+    
   }
   else
   {
@@ -337,8 +342,8 @@ void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
   if (digitalRead(25) == 0)
   { // button 2 pressed runn a set distance only
     stepper1.stop();
-    stepper2.stop();
-    digitalWrite(32, LOW); // when pin is low the stepper driver should turn on
+    //stepper2.stop();
+    digitalWrite(stepper2Enable, LOW); // when pin is low the stepper driver should turn on
 
     if (stepper2.distanceToGo() == 0)
     {
@@ -350,15 +355,18 @@ void stepper2Control(int maxSpeed, int maxAcceleration, int distanceToStep)
       //stepper2.runSpeedToPosition();
     }
   }
-  else if (digitalRead(25) == 1 && stepper2.distanceToGo() == 0 && stepper1.distanceToGo())
+  else if (digitalRead(25) == 1 && stepper2.distanceToGo() == 0)
   { // wait to turn off untill the button is released and or the stepper has reached it's target dest.
     // stepper1.move(0);
     stepper2.move(0);
-    digitalWrite(32, HIGH);
+    digitalWrite(stepper2Enable, HIGH);
+    // display1.clearDisplay();
+    // display1.display();
   }
 
   stepper2.run(); // run any steps qued for the stepper
 }
+
 
 //attach interup cannot use functions with parameters...
 void changeButtonState0() {
@@ -419,6 +427,7 @@ void changeButtonState4() {
     previousUpdate4 = millis();
     buttonState[4] = !buttonState[4];
   }
+  digitalWrite(stepper2Enable, LOW);
 }
 
 void changeButtonState5() {
@@ -431,6 +440,7 @@ void changeButtonState5() {
     previousUpdate5 = millis();
     buttonState[5] = !buttonState[5];
   }
+  digitalWrite(stepper2Enable, HIGH);
 }
 
 // void menu() {
